@@ -1887,7 +1887,7 @@
     const btnWear = document.getElementById('btn-wear');
 
     let scrollProg = 0;
-    window.addEventListener('scroll', () => {
+    function syncScroll() {
       const doc = document.documentElement;
       const scrollTop = window.scrollY || doc.scrollTop;
       const maxScroll = doc.scrollHeight - window.innerHeight;
@@ -1897,13 +1897,6 @@
       } else {
         scrollProg = 0;
       }
-
-      // Fade pink background
-      bgPink.style.opacity = Math.min(1, Math.max(0, scrollProg * 1.5));
-
-      // Lerp particle and lighting color
-      mat.color.copy(colorGold).lerp(colorRose, Math.min(1, Math.max(0, scrollProg)));
-      pointLight.color.copy(colorGold).lerp(colorRose, Math.min(1, Math.max(0, scrollProg)));
 
       // Update floating header theme and active button
       if (scrollProg < 0.5) {
@@ -1931,7 +1924,12 @@
       if (sections[1]) {
         sections[1].style.transform = `translateY(0px)`;
       }
-    }, { passive: true });
+    }
+
+    window.addEventListener('scroll', syncScroll, { passive: true });
+    // Sincronizar imediatamente na inicialização para evitar pulos/glitches iniciais
+    window.addEventListener('DOMContentLoaded', syncScroll);
+    syncScroll();
 
     let lastTime = Date.now();
 
@@ -1939,6 +1937,21 @@
       const now = Date.now();
       const deltaTime = now - lastTime;
       lastTime = now;
+
+      // Calcular scrollProg em tempo real a cada frame para manter renderização tridimensional livre de stutters/lags
+      const doc = document.documentElement;
+      const scrollTop = window.scrollY || doc.scrollTop;
+      const maxScroll = doc.scrollHeight - window.innerHeight;
+      scrollProg = maxScroll > 0 ? scrollTop / maxScroll : 0;
+
+      // Lerp particle and lighting color em tempo real no frame
+      mat.color.copy(colorGold).lerp(colorRose, Math.min(1, Math.max(0, scrollProg)));
+      pointLight.color.copy(colorGold).lerp(colorRose, Math.min(1, Math.max(0, scrollProg)));
+
+      // Fade pink background
+      if (bgPink) {
+        bgPink.style.opacity = Math.min(1, Math.max(0, scrollProg * 1.5));
+      }
 
       const pos = geo.getAttribute('position');
       for (let i = 0; i < COUNT; i++) {
