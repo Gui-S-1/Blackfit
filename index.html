@@ -1947,23 +1947,33 @@
       }
       pos.needsUpdate = true;
 
-      // Controla a visibilidade dos itens por seção no midpoint do scroll
-      items.forEach(item => {
-        item.mesh.visible = (scrollProg < 0.5 ? item.section === 1 : item.section === 2);
-      });
-
-      // Animar os itens flutuantes 3D com efeito suave de ondas
+      // Animar os itens flutuantes 3D com efeito suave de ondas e scroll contínuo 1:1
       const time = now * 0.001;
       items.forEach(item => {
         item.mesh.rotation.x += item.rotX * 0.5;
         item.mesh.rotation.y += item.rotY * 0.5;
         
+        // Calcular o tamanho do frustum dinâmico com base na profundidade do objeto para scroll 1:1 perfeito
+        const itemZ = item.basePos.z || 2.5;
+        const dist = camera.position.z - itemZ;
+        const frustumHeight = 2 * dist * Math.tan((camera.fov * Math.PI / 180) / 2);
+        
         const floatY = Math.sin(time * item.speedY * 10) * 0.35;
         const floatX = Math.cos(time * item.speedX * 10) * 0.25;
         
-        // Aplica a flutuação (e removemos o deslocamento de scroll para manter os itens flutuando fixos no topo ao lado dos rostos)
-        item.mesh.position.y = item.basePos.y + floatY;
+        // Deslocamento vertical 1:1 baseado no scroll da página (sobe junto com o conteúdo)
+        let scrollYOffset = 0;
+        if (item.section === 1) {
+          scrollYOffset = scrollProg * frustumHeight;
+        } else {
+          scrollYOffset = (scrollProg - 1.0) * frustumHeight;
+        }
+        
+        item.mesh.position.y = item.basePos.y + scrollYOffset + floatY;
         item.mesh.position.x = (item.basePos.x * screenFactor) + floatX;
+        
+        // Garante que o mesh sempre esteja visível pois o scroll cuida de tirá-lo de cena naturalmente
+        item.mesh.visible = true;
 
         // Se for um sistema de partículas com morphing
         if (item.isMorph) {
