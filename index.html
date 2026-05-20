@@ -1785,16 +1785,16 @@
 
     // Instanciar cabides e sacolas 3D na área de Fitwear (Seção 2)
     const hanger = createHanger();
-    hanger.position.set(4.8, 3.2, 2);
+    hanger.position.set(4.8, 3.2, 7);
     hanger.rotation.set(0.4, 0.8, 0.1);
     scene.add(hanger);
-    items.push({ mesh: hanger, section: 2, speedX: 0.005, speedY: 0.008, rotX: -0.008, rotY: 0.006, basePos: { x: 4.8, y: 3.2, z: 2 } });
+    items.push({ mesh: hanger, section: 2, speedX: 0.005, speedY: 0.008, rotX: -0.008, rotY: 0.006, basePos: { x: 4.8, y: 3.2, z: 7 } });
 
     const bag = createShoppingBag();
-    bag.position.set(4.2, 1.2, 3);
+    bag.position.set(4.2, 1.2, 8);
     bag.rotation.set(-0.5, 1.2, 0.4);
     scene.add(bag);
-    items.push({ mesh: bag, section: 2, speedX: 0.008, speedY: 0.012, rotX: 0.01, rotY: 0.018, basePos: { x: 4.2, y: 1.2, z: 3 } });
+    items.push({ mesh: bag, section: 2, speedX: 0.008, speedY: 0.012, rotX: 0.01, rotY: 0.018, basePos: { x: 4.2, y: 1.2, z: 8 } });
 
     // Instanciar os objetos de partículas com Morphing nas áreas vazias
     const jarTarget = generateJarPoints(1200);
@@ -1850,7 +1850,7 @@
       speedY: 0.007,
       rotX: 0.003,
       rotY: 0.005,
-      basePos: { x: 4.8, y: 2.2, z: 3 },
+      basePos: { x: 4.8, y: 2.2, z: 8 },
       isMorph: true,
       targets: [tshirtTarget, hangerTarget, bagTarget],
       activeShapeIndex: 0,
@@ -1889,11 +1889,11 @@
     let scrollProg = 0;
     function syncScroll() {
       const doc = document.documentElement;
-      const scrollTop = window.scrollY || doc.scrollTop;
+      const scrollTop = Math.max(0, window.scrollY || doc.scrollTop);
       const maxScroll = doc.scrollHeight - window.innerHeight;
 
       if (maxScroll > 0) {
-        scrollProg = scrollTop / maxScroll;
+        scrollProg = Math.min(1, scrollTop / maxScroll);
       } else {
         scrollProg = 0;
       }
@@ -1975,11 +1975,12 @@
         const floatX = Math.cos(time * item.speedX * 10) * 0.25;
         
         // Deslocamento vertical 1:1 baseado no scroll da página (sobe junto com o conteúdo)
+        const clampedProg = Math.min(1, Math.max(0, scrollProg));
         let scrollYOffset = 0;
         if (item.section === 1) {
-          scrollYOffset = scrollProg * frustumHeight;
+          scrollYOffset = clampedProg * frustumHeight;
         } else {
-          scrollYOffset = (scrollProg - 1.0) * frustumHeight;
+          scrollYOffset = (clampedProg - 1.0) * frustumHeight;
         }
         
         item.mesh.position.y = item.basePos.y + scrollYOffset + floatY;
